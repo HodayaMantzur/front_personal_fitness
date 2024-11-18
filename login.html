@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כניסת משתמש</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 400px;
+            margin-top: 50px;
+        }
+        .card {
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+        }
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 class="text-center">כניסת מנוי</h1>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="name">שם מלא:</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_number">מס' זהות:</label>
+                    <input type="text" class="form-control" id="id_number" name="id_number" required>
+                </div>
+                <br>
+                <button type="submit" class="btn btn-custom w-100">כניסת משתמש</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const id_number = document.getElementById('id_number').value;
+
+            axios.post('http://127.0.0.1:8000/login/', {
+                name: name,
+                id_number: id_number
+            })
+            .then(function(response) {
+                alert('התחברת בהצלחה!');
+                // כאן תוכל לאחסן את הטוקן ב-localStorage או cookies
+                localStorage.setItem('access_token', response.data.access);
+                window.location.href = 'workouts.html'; // או לעמוד הבא
+            })
+            .catch(function(error) {
+                alert('שגיאה בהתחברות, אנא נסה שנית');
+                console.error(error);
+            });
+        });
+    </script>
+</body>
+</html>

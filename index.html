@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניהול מנויים ואימונים</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+   <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('https://source.unsplash.com/1600x900/?fitness'); /* תמונת רקע */
+            background-size: cover;
+            background-position: center;
+            color: white;
+        }
+
+        .container {
+            max-width: 700px;
+            margin-top: 100px;
+            background-color: rgba(255, 255, 255, 0.8); /* רקע מעט שקוף */
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .card {
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        h1, h2 {
+            color: #D28D94;
+            font-weight: 700;
+        }
+
+        .btn-custom, .btn-secondary-custom {
+            border: none;
+            font-weight: 600;
+            border-radius: 30px;
+            padding: 12px 30px;
+        }
+
+        .btn-custom {
+            background-color: #D28D94;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: #c17a6b;
+        }
+
+        .btn-secondary-custom {
+            background-color: #6c757d;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-secondary-custom:hover {
+            background-color: #5a6268;
+        }
+
+        .form-control {
+            border-radius: 25px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #D28D94;
+            box-shadow: 0 0 5px rgba(210, 141, 148, 0.25);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #343a40;
+        }
+
+        .form-group input, .form-group select {
+            font-size: 16px;
+        }
+
+        .alert {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">ניהול מנויים ואימונים</h1>
+
+        <div class="button-container my-4">
+            <button id="existing-member-btn" class="btn btn-custom mx-2">מנוי קיים</button>
+            <button id="create-member-btn" class="btn btn-custom mx-2">הוסף מנוי חדש</button>
+        </div>
+
+        <!-- כפתור גישה לאדמין -->
+        <div class="text-center my-4">
+            <button id="admin-btn" class="btn btn-secondary-custom mx-2" onclick="window.location.href='admin.html'">כניסת מנהל</button>
+        </div>
+
+        <div id="create-member-form-container" class="card" style="display: none;">
+            <h2 class="text-center">צור מנוי חדש</h2>
+            <form id="create-member-form">
+                <div class="form-group">
+                    <label for="name" class="form-label">שם מלא:</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email" class="form-label">אימייל:</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="id_number" class="form-label">מס' זהות:</label>
+                    <input type="text" class="form-control" id="id_number" name="id_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone_number" class="form-label">מס' טלפון:</label>
+                    <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+                </div>
+                <div class="form-group">
+                    <label for="age" class="form-label">גיל:</label>
+                    <input type="number" class="form-control" id="age" name="age" required>
+                </div>
+                <div class="form-group">
+                    <label for="days_per_week" class="form-label"> מס' אימונים שבועי -עד 3:</label>
+                    <input type="number" class="form-control" id="days_per_week" name="days_per_week" min="1" max="3" required>
+                </div>
+                <div class="form-group">
+                    <label for="day_of_week" class="form-label">יום בשבוע:</label>
+                    <select class="form-control" id="day_of_week" name="day_of_week" required>
+                        <option value="Sun">ראשון</option>
+                        <option value="Mon">שני</option>
+                        <option value="Tue">שלישי</option>
+                        <option value="Wed">רביעי</option>
+                        <option value="Thu">חמישי</option>
+                        <option value="Fri">שישי</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="subscription_valid_until" class="form-label">תוקף מנוי עד:</label>
+                    <input type="date" class="form-control" id="subscription_valid_until" name="subscription_valid_until" required>
+                </div>
+                <div class="form-group">
+                    <label for="weight" class="form-label">משקל:</label>
+                    <input type="number" step="0.1" class="form-control" id="weight" name="weight">
+                </div>
+                <div class="form-group">
+                    <label for="height" class="form-label">גובה:</label>
+                    <input type="number" step="0.1" class="form-control" id="height" name="height">
+                </div>
+                <button type="submit" class="btn btn-custom w-100">צור מנוי חדש</button>
+            </form>
+        </div>
+
+        <div id="existing-member-form-container" class="card" style="display: none;">
+            <h2 class="text-center">מנוי קיים</h2>
+            <p class="text-center">התחבר עם פרטי המנוי שלך</p>
+            <div class="text-center">
+                <a href="{% url 'login' %}" class="btn btn-secondary-custom">כניסת מנוי</a>
+            </div>        
+        </div>
+    </div>
+
+    <script>
+        const HOST = "http://127.0.0.1:8000"; // הגדרת כתובת ה-API
+    
+        document.addEventListener('DOMContentLoaded', function () {
+            // כפתור יצירת מנוי חדש
+            document.getElementById('create-member-btn').addEventListener('click', function () {
+                document.getElementById('create-member-form-container').style.display = 'block';
+                document.getElementById('existing-member-form-container').style.display = 'none';
+            });
+    
+            // כפתור מנוי קיים
+            document.getElementById('existing-member-btn').addEventListener('click', function () {
+                window.location.href = 'login.html';
+            });
+    
+            // טיפול בהגשה של טופס יצירת המנוי
+            document.getElementById('create-member-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+    
+                const daysPerWeek = parseInt(document.getElementById('days_per_week').value);
+                if (daysPerWeek > 3) {
+                    alert('המספר המרבי של אימונים בשבוע הוא 3!');
+                    return;
+                }
+    
+                const name_value = document.getElementById('name').value;
+                const email_value = document.getElementById('email').value;
+                const id_number_value = document.getElementById('id_number').value;
+                const phone_number_value = document.getElementById('phone_number').value;
+                const age_value = parseInt(document.getElementById('age').value, 10);
+                const days_per_week_value = parseInt(document.getElementById('days_per_week').value, 10);
+                const subscription_valid_until_value = document.getElementById('subscription_valid_until').value;
+                const weight_value = parseFloat(document.getElementById('weight').value);
+                const height_value = parseFloat(document.getElementById('height').value);
+    
+                try {
+                    const response = await axios.post(`${HOST}/users/create/`, {
+                        name: name_value,
+                        email: email_value,
+                        id_number: id_number_value,
+                        phone_number: phone_number_value,
+                        age: age_value,
+                        days_per_week: days_per_week_value,
+                        subscription_valid_until: subscription_valid_until_value,
+                        weight: weight_value,
+                        height: height_value
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+    
+                    alert('המנוי נוצר בהצלחה!');
+                    document.getElementById('create-member-form').reset();
+                    document.getElementById('create-member-form-container').style.display = 'none';
+                } catch (error) {
+                    alert('שגיאה בעת יצירת המנוי.');
+                    console.error(error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

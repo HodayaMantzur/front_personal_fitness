@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>האימונים שלי</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 50px;
+        }
+        h1 {
+            color: #D28D94;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            background-color: #D28D94;
+            color: white;
+            font-size: 1.25rem;
+            border-radius: 10px 10px 0 0;
+            padding: 10px;
+        }
+        .btn-primary {
+            background-color: #D28D94;
+            border-color: #D28D94;
+        }
+        .btn-primary:hover {
+            background-color: #c17a6b;
+            border-color: #b15e53;
+        }
+        .list-group-item {
+            font-size: 1rem;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .list-group-item:hover {
+            background-color: #e9ecef;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>האימונים שלי</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                סיכום אימונים
+            </div>
+            <div class="card-body">
+                <p>סך האימונים הכולל במנוי: <span id="total-classes"></span></p>
+                <p>מספר האימונים שבוצעו: <span id="completed-workouts"></span></p>
+                <p>מספר האימונים שנותרו: <span id="remaining-classes"></span></p>
+            </div>
+        </div>
+
+        <h3>הוסף אימון חדש</h3>
+        <div class="card">
+            <div class="card-header">
+                פרטי אימון חדש
+            </div>
+            <div class="card-body">
+                <form id="workout-form">
+                    <div class="mb-3">
+                        <label for="workout-date" class="form-label">תאריך האימון</label>
+                        <input type="date" class="form-control" id="workout-date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="calories-burned" class="form-label">קלוריות שנשרפו</label>
+                        <input type="number" class="form-control" id="calories-burned" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="completed" class="form-label">בוצע?</label>
+                        <select class="form-control" id="completed">
+                            <option value="true">כן</option>
+                            <option value="false">לא</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">הוסף אימון</button>
+                </form>
+            </div>
+        </div>
+
+        <h3>אימונים שבוצעו</h3>
+        <div class="card">
+            <div class="card-header">
+                רשימת האימונים
+            </div>
+            <div class="card-body">
+                <ul id="workouts-list-summary" class="list-group">
+                    <!-- אימונים יוצגו כאן -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // קבלת מידע על האימונים
+        axios.get('http://127.0.0.1:8000/workouts/list/', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            const totalClasses = response.data.total_classes_available || 0;
+            const completedWorkouts = response.data.completed_workouts || 0;
+            const remainingClasses = totalClasses - completedWorkouts;
+
+            // עדכון הסיכום
+            document.getElementById('total-classes').innerText = totalClasses;
+            document.getElementById('completed-workouts').innerText = completedWorkouts;
+            document.getElementById('remaining-classes').innerText = remainingClasses;
+
+            // הצגת רשימת האימונים
+            const workoutsList = response.data.workouts || [];
+            const workoutsListSummary = document.getElementById('workouts-list-summary');
+            workoutsListSummary.innerHTML = '';  // ניקוי הרשימה הקיימת
+
+            workoutsList.forEach(workout => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.innerText = `תאריך: ${workout.date}, קלוריות שנשרפו: ${workout.calories_burned}, בוצע: ${workout.completed ? 'כן' : 'לא'}`;
+                workoutsListSummary.appendChild(listItem);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching workout list:", error);
+            alert("שגיאה בהבאת מידע על האימונים");
+        });
+
+        // שליחה של טופס הוספת אימון
+        document.getElementById('workout-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const workoutDate = document.getElementById('workout-date').value;
+            const caloriesBurned = document.getElementById('calories-burned').value;
+            const completed = document.getElementById('completed').value === 'true';
+
+            axios.post('http://127.0.0.1:8000/workouts/add/', {
+                date: workoutDate,
+                calories_burned: caloriesBurned,
+                completed: completed
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                alert("האימון נוסף בהצלחה!");
+
+                // עדכון המידע על האימונים
+                const totalClasses = response.data.total_classes_available || 0;
+                const completedWorkouts = response.data.completed_workouts || 0;
+                const remainingClasses = totalClasses - completedWorkouts;
+
+                document.getElementById('total-classes').innerText = totalClasses;
+                document.getElementById('completed-workouts').innerText = completedWorkouts;
+                document.getElementById('remaining-classes').innerText = remainingClasses;
+
+                // עדכון רשימת האימונים
+                const workoutsListSummary = document.getElementById('workouts-list-summary');
+                const newWorkout = response.data.new_workout || {};
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.innerText = `תאריך: ${newWorkout.date}, קלוריות שנשרפו: ${newWorkout.calories_burned}, בוצע: ${newWorkout.completed ? 'כן' : 'לא'}`;
+                workoutsListSummary.appendChild(listItem);
+            })
+            .catch(error => {
+                console.error("Error adding workout:", error.response || error.message || error);
+                alert("שגיאה בהוספת האימון");
+            });
+        });
+    </script>
+</body>
+</html>
