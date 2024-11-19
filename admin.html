@@ -2,13 +2,15 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>רשימת מנויים - מנהל מערכת</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-<body>
+<body dir="rtl">
     <div class="container mt-5">
-        <h1>רשימת מנויים</h1>
-        <table class="table table-striped">
+        <h1 class="text-center">רשימת מנויים</h1>
+        <table class="table table-striped mt-3" id="subscribersTable">
             <thead>
                 <tr>
                     <th>תעודת זהות</th>
@@ -16,39 +18,80 @@
                     <th>אימייל</th>
                     <th>טלפון</th>
                     <th>מספר אימונים</th>
-                    <th>אימונים בוצעו</th>
-                    <th>אימונים שהוחמצו</th>
+                    <th>אימונים שבוצעו</th>
                     <th>מחק מנוי</th>
                 </tr>
             </thead>
             <tbody>
-                {% for user in users %}
-                    <tr>
-                        <td>{{ user.id_number }}</td>
-                        <td>{{ user.name }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.phone_number }}</td>
-                        <td>{{ user.workouts.count }}</td>  <!-- הצגת מספר האימונים -->
-                        <td>
-                            {% with completed_workouts=user.workouts.filter(completed=True) %}
-                                {{ completed_workouts.count }}  <!-- מספר האימונים שבוצעו -->
-                            {% endwith %}
-                        </td>
-                        <td>
-                            {% with missed_workouts=user.workouts.filter(completed=False) %}
-                                {{ missed_workouts.count }}  <!-- מספר האימונים שהוחמצו -->
-                            {% endwith %}
-                        </td>
-                        <td>
-                            <form action="{% url 'delete_subscription' user.id %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-danger">מחק</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
+                <!-- הנתונים ייטענו כאן על ידי JavaScript -->
             </tbody>
         </table>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const tableBody = document.querySelector("#subscribersTable tbody");
+
+            // פונקציה לטעינת המנויים
+            const loadSubscribers = async () => {
+                try {
+                    const response = await axios.get("http://127.0.0.1:8000/users/admin/");
+                    const subscribers = response.data;
+
+                    tableBody.innerHTML = ""; // ניקוי הטבלה
+                    subscribers.forEach((subscriber) => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${subscriber.id_number}</td>
+                            <td>${subscriber.name}</td>
+                            <td>${subscriber.email}</td>
+                            <td>${subscriber.phone_number || "לא זמין"}</td>
+                            <td>${subscriber.workouts_count || 0}</td>
+                            <td>${subscriber.completed_workouts || 0}</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="${subscriber.id}">
+                                    מחק
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+
+                    // הוספת מאזינים למחיקת מנויים
+                    addDeleteListeners();
+                } catch (error) {
+                    console.error("שגיאה בטעינת המנויים:", error);
+                    alert("לא ניתן לטעון את רשימת המנויים.");
+                }
+            };
+
+            // פונקציה למחיקת מנוי
+            const deleteSubscriber = async (id) => {
+                if (!confirm("האם אתה בטוח שברצונך למחוק מנוי זה?")) return;
+
+                try {
+                    await axios.delete(`http://127.0.0.1:8000/users/admin/${id}/`);
+                    alert("המנוי נמחק בהצלחה!");
+                    loadSubscribers(); // טען מחדש את הרשימה
+                } catch (error) {
+                    console.error("שגיאה במחיקת המנוי:", error);
+                    alert("אירעה שגיאה במחיקת המנוי.");
+                }
+            };
+
+            // הוספת מאזינים לכפתורי מחיקה
+            const addDeleteListeners = () => {
+                document.querySelectorAll(".delete-btn").forEach((button) => {
+                    button.addEventListener("click", () => {
+                        const id = button.getAttribute("data-id");
+                        deleteSubscriber(id);
+                    });
+                });
+            };
+
+            // טען את המנויים כשהעמוד נטען
+            loadSubscribers();
+        });
+    </script>
 </body>
 </html>
